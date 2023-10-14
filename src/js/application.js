@@ -1,10 +1,10 @@
 import { Notify } from 'notiflix';
-import { PixabayAPI } from './pixabay-app.js';
-import { createMarkUp } from './createmarkup.js';
+import { PixabayAPI } from './pixabay-application.js';
+import { createMarkup } from './createmarkup.js';
 
 const refs = {
   form: document.querySelector('.search-form'),
-  input: document.querySelector('.js-searh-form'),
+  input: document.querySelector('.js-search-form'),
   searchButton: document.querySelector('.search-button'),
   list: document.querySelector('.gallery'),
   anchor: document.querySelector('.target-element'),
@@ -35,19 +35,19 @@ async function handleSearch(event) {
   pixabayAPI.q = searchQuery;
   if (!searchQuery) {
     list.innerHTML = '';
-    return Notify.failure('Sorry, your search query is empty. Please try again.');
+    return Notify.failure('Apologies, your search query is empty. Please try again.');
   }
 
   try {
     const response = await pixabayAPI.getPhotos();
 
     if (response.data.total) {
-      Notify.success(`We found ${Math.ceil(response.data.total / pixabayAPI.perPage)} pages of results.`);
+      Notify.success(`We discovered ${Math.ceil(response.data.total / pixabayAPI.perPage)} pages of results.`);
     } else {
-      Notify.failure('Sorry! Your query is empty! Try again, please.');
+        Notify.failure("Sorry! Your query didn't yield any results. Please try again.");
     }
 
-    list.innerHTML = createMarkUp(response.data.hits);
+    list.innerHTML = createMarkup(response.data.hits);
 
     if (response.data.hits.length === 0) {
       list.innerHTML = '';
@@ -67,7 +67,7 @@ async function loadMoreData() {
     pixabayAPI.page += 1;
     if (pixabayAPI.page > 1) {
       const response = await pixabayAPI.getPhotos();
-      list.insertAdjacentHTML('beforeend', createMarkUp(response.data.hits));
+      list.insertAdjacentHTML('beforeend', createMarkup(response.data.hits));
 
       if (Math.ceil(response.data.total / pixabayAPI.perPage) === pixabayAPI.page) {
         observer.unobserve(anchor);
