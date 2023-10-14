@@ -40,18 +40,17 @@ async function handleSearch(event) {
 
   try {
     const response = await pixabayAPI.getPhotos();
-
     if (response.data.total) {
-      Notify.success(`We discovered ${Math.ceil(response.data.total / pixabayAPI.perPage)} pages of results.`);
+      Notify.success(`We discovered ${response.data.total} images.`);
     } else {
-        Notify.failure("Sorry! Your query didn't yield any results. Please try again.");
+      Notify.failure("Sorry, there are no images matching your search query. Please try again.");
     }
-
     list.innerHTML = createMarkup(response.data.hits);
 
-    if (response.data.hits.length === 0) {
+    if (response.data.hits.length === 0 || pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
       list.innerHTML = '';
       observer.unobserve(anchor);
+      Notify.success('End of search results.');
     }
 
     if (response.data.total > pixabayAPI.perPage) {
@@ -65,19 +64,12 @@ async function handleSearch(event) {
 async function loadMoreData() {
   try {
     pixabayAPI.page += 1;
-    if (pixabayAPI.page > 1) {
-      const response = await pixabayAPI.getPhotos();
-      list.insertAdjacentHTML('beforeend', createMarkup(response.data.hits));
+    const response = await pixabayAPI.getPhotos();
+    list.insertAdjacentHTML('beforeend', createMarkup(response.data.hits));
 
-      if (Math.ceil(response.data.total / pixabayAPI.perPage) === pixabayAPI.page) {
-        observer.unobserve(anchor);
-        return Notify.success('End of search results.');
-      }
-
-      if (response.data.hits.length === 0) {
-        observer.unobserve(anchor);
-        return Notify.failure('No more search results to load.');
-      }
+    if (response.data.hits.length === 0 || pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
+      observer.unobserve(anchor);
+      Notify.success('End of search results.');
     }
   } catch (error) {
     console.log(error);
