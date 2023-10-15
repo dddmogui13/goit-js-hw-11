@@ -43,14 +43,14 @@ async function handleSearch(event) {
 
   try {
     const response = await pixabayAPI.getPhotos();
-    if (response.data.total) {
+    if (response.data.totalHits) {
       Notify.success(`We discovered ${response.data.totalHits} images.`);
     } else {
       Notify.failure("Sorry, there are no images matching your search query. Please try again.");
     }
     list.innerHTML = createMarkup(response.data.hits);
 
-    if (response.data.total <= pixabayAPI.perPage) {
+    if (response.data.totalHits <= pixabayAPI.perPage) {
       noMoreResults = true;  
       Notify.info('End of search results.');
     } else {
@@ -69,11 +69,11 @@ async function loadMoreData() {
     const response = await pixabayAPI.getPhotos();
     list.insertAdjacentHTML('beforeend', createMarkup(response.data.hits));
 
-    if (response.data.hits.length === 0 || pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
+    if (response.data.hits.length === 0 || pixabayAPI.page * pixabayAPI.perPage >= response.data.totalHits) {
       noMoreResults = true; 
       Notify.info('End of search results.');
       observer.unobserve(anchor);
-    } else if (pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
+    } else if (pixabayAPI.page * pixabayAPI.perPage >= response.data.totalHits) {
       noMoreResults = true;
       Notify.info('End of search results.');
     } else {
