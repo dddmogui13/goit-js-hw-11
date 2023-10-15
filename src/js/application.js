@@ -26,6 +26,7 @@ const observer = new IntersectionObserver(
 );
 
 const pixabayAPI = new PixabayAPI(40);
+let noMoreResults = false;  
 
 form.addEventListener('submit', handleSearch);
 async function handleSearch(event) {
@@ -33,27 +34,26 @@ async function handleSearch(event) {
   pixabayAPI.page = 1;
   const searchQuery = input.value.trim();
   pixabayAPI.q = searchQuery;
+  noMoreResults = false;  
   if (!searchQuery) {
     list.innerHTML = '';
-    return Notify.failure('Apologies, your search query is empty. Please try again.');
+    Notify.failure('Apologies, your search query is empty. Please try again.');
+    return;
   }
 
   try {
     const response = await pixabayAPI.getPhotos();
     if (response.data.total) {
-      Notify.success(`We discovered ${response.data.total} images.`);
+      Notify.success(`We discovered ${response.data.totalHits} images.`);
     } else {
       Notify.failure("Sorry, there are no images matching your search query. Please try again.");
     }
     list.innerHTML = createMarkup(response.data.hits);
 
-    if (response.data.hits.length === 0 || pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
-      list.innerHTML = '';
-      observer.unobserve(anchor);
-      Notify.success('End of search results.');
-    }
-
-    if (response.data.total > pixabayAPI.perPage) {
+    if (response.data.total <= pixabayAPI.perPage) {
+      noMoreResults = true;  
+      Notify.info('End of search results.');
+    } else {
       observer.observe(anchor);
     }
   } catch (error) {
@@ -62,14 +62,22 @@ async function handleSearch(event) {
 }
 
 async function loadMoreData() {
+  if (noMoreResults) return;
+
   try {
     pixabayAPI.page += 1;
     const response = await pixabayAPI.getPhotos();
     list.insertAdjacentHTML('beforeend', createMarkup(response.data.hits));
 
     if (response.data.hits.length === 0 || pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
+      noMoreResults = true; 
+      Notify.info('End of search results.');
       observer.unobserve(anchor);
-      Notify.success('End of search results.');
+    } else if (pixabayAPI.page * pixabayAPI.perPage >= response.data.total) {
+      noMoreResults = true;
+      Notify.info('End of search results.');
+    } else {
+      observer.observe(anchor);
     }
   } catch (error) {
     console.log(error);
